@@ -14,6 +14,7 @@
   --green:  #3fb950;
   --blue:   #58a6ff;
   --red:    #f85149;
+  --orange: #f0883e;
 }
 
 html { color-scheme: dark; }
@@ -363,7 +364,108 @@ h2 {
 .stat-full {
   grid-column: 1 / -1;
 }
+/* ── Log section ──────────────────────────────────────────────────────────── */
+.log-section {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
 
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.log-row-label {
+  width: 46px;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.picker {
+  display: flex;
+  gap: 6px;
+}
+
+.pick-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.pick-btn:hover { transform: scale(1.12); }
+
+.pick-active-mood {
+  border-color: var(--blue);
+  background: rgba(88, 166, 255, 0.14);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.25);
+}
+
+.pick-active-hunger {
+  border-color: var(--orange);
+  background: rgba(240, 136, 62, 0.14);
+  box-shadow: 0 0 0 2px rgba(240, 136, 62, 0.25);
+}
+
+.btn-log {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-log:not(:disabled):hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.btn-log:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Chart ───────────────────────────────────────────────────────────────────── */
+.chart-wrap {
+  margin-bottom: 14px;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.legend-mood   { color: var(--blue); }
+.legend-hunger { color: var(--orange); }
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
 /* ── Stop button ───────────────────────────────────────────────────────────── */
 .btn-stop {
   width: 100%;

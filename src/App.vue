@@ -83,6 +83,7 @@ function formatDateTime(ts) {
 // ── Actions ───────────────────────────────────────────────────────────────────
 function startFasting() {
   errorMsg.value = ''
+  clearLogs()
   const start = Date.now()
   let end
 
@@ -109,6 +110,7 @@ function stopFasting() {
   fastingEnd.value   = null
   deleteCookie(COOKIE_START)
   deleteCookie(COOKIE_END)
+  clearLogs()
 }
 
 function loadFromCookies() {
@@ -143,9 +145,60 @@ const minDateTime = computed(() => {
   return new Date(Date.now() + 60000).toISOString().slice(0, 16)
 })
 
+// ── Mood & hunger log ─────────────────────────────────────────────────────────
+const moodEmojis   = ['😫', '😕', '😐', '🙂', '😄']
+const hungerEmojis = ['😌', '😐', '😕', '😩', '🤤']
+
+const selectedMood   = ref(null)
+const selectedHunger = ref(null)
+const logs           = ref([])   // [{ time, mood: 1-5, hunger: 1-5 }]
+
+function logEntry() {
+  if (selectedMood.value === null || selectedHunger.value === null) return
+  logs.value.push({ time: Date.now(), mood: selectedMood.value, hunger: selectedHunger.value })
+  localStorage.setItem('noeats_logs', JSON.stringify(logs.value))
+  selectedMood.value   = null
+  selectedHunger.value = null
+}
+
+function loadLogs() {
+  try {
+    const raw = localStorage.getItem('noeats_logs')
+    logs.value = raw ? JSON.parse(raw) : []
+  } catch { logs.value = [] }
+}
+
+function clearLogs() {
+  logs.value = []
+  localStorage.removeItem('noeats_logs')
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────────
+const CW = 400, CH = 160, CPL = 28, CPR = 12, CPT = 14, CPB = 10
+
+const chartData = computed(() => {
+  if (!fastingStart.value || logs.value.length === 0) return null
+  const plotW = CW - CPL - CPR
+  const plotH = CH - CPT - CPB
+  const endT  = fastingEnd.value ?? now.value
+  const xOf   = t => CPL + Math.max(0, Math.min(1, (t - fastingStart.value) / (endT - fastingStart.value))) * plotW
+  const yOf   = v => CPT + plotH - ((v - 1) / 4) * plotH
+  const pts   = logs.value.map(l => ({ x: xOf(l.time), my: yOf(l.mood), hy: yOf(l.hunger) }))
+  return {
+    gridYs:     [1, 2, 3, 4, 5].map(v => ({ v, y: yOf(v) })),
+    pts,
+    moodLine:   pts.map(p => `${p.x},${p.my}`).join(' '),
+    hungerLine: pts.map(p => `${p.x},${p.hy}`).join(' '),
+    nowX:       xOf(now.value),
+    x1: CPL,  x2: CW - CPR,
+    yTop: CPT, yBot: CPT + plotH,
+  }
+})
+
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
   loadFromCookies()
+  loadLogs()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
 })
 
@@ -232,6 +285,76 @@ onUnmounted(() => clearInterval(timer))
       <div class="elapsed-hero">
         <span class="elapsed-label">Time Fasting</span>
         <span class="elapsed-time">{{ timeElapsed }}</span>
+      </div>
+
+      <!-- Log entry -->
+      <div v-if="isActive" class="log-section">
+        <p class="section-label">How do you feel?</p>
+        <div class="log-row">
+          <span class="log-row-label">Mood</span>
+          <div class="picker">
+            <button
+              v-for="(emoji, i) in moodEmojis" :key="i"
+              :class="['pick-btn', { 'pick-active-mood': selectedMood === i + 1 }]"
+              @click="selectedMood = selectedMood === i + 1 ? null : i + 1"
+            >{{ emoji }}</button>
+          </div>
+        </div>
+        <div class="log-row">
+          <span class="log-row-label">Hunger</span>
+          <div class="picker">
+            <button
+              v-for="(emoji, i) in hungerEmojis" :key="i"
+              :class="['pick-btn', { 'pick-active-hunger': selectedHunger === i + 1 }]"
+              @click="selectedHunger = selectedHunger === i + 1 ? null : i + 1"
+            >{{ emoji }}</button>
+          </div>
+        </div>
+        <button
+          class="btn-log"
+          :disabled="selectedMood === null || selectedHunger === null"
+          @click="logEntry"
+        >+ Log</button>
+      </div>
+
+      <!-- Chart -->
+      <div v-if="logs.length > 0 && chartData" class="chart-wrap">
+        <div class="chart-legend">
+          <span class="legend-mood">&#9679; Mood</span>
+          <span class="legend-hunger">&#9679; Hunger</span>
+        </div>
+        <svg class="chart-svg" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+          <!-- Grid lines -->
+          <line v-for="g in chartData.gridYs" :key="g.v"
+            :x1="chartData.x1" :x2="chartData.x2"
+            :y1="g.y" :y2="g.y"
+            stroke="var(--border)" stroke-width="1" />
+          <!-- Y labels -->
+          <text v-for="g in chartData.gridYs" :key="'l' + g.v"
+            :x="CPL - 4" :y="g.y + 4"
+            text-anchor="end" font-size="9" fill="var(--muted)">{{ g.v }}</text>
+          <!-- Now marker -->
+          <line v-if="isActive"
+            :x1="chartData.nowX" :x2="chartData.nowX"
+            :y1="chartData.yTop" :y2="chartData.yBot"
+            stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,3" />
+          <!-- Mood line -->
+          <polyline v-if="chartData.pts.length > 1"
+            :points="chartData.moodLine"
+            fill="none" stroke="var(--blue)" stroke-width="2"
+            stroke-linejoin="round" stroke-linecap="round" />
+          <!-- Hunger line -->
+          <polyline v-if="chartData.pts.length > 1"
+            :points="chartData.hungerLine"
+            fill="none" stroke="var(--orange)" stroke-width="2"
+            stroke-linejoin="round" stroke-linecap="round" />
+          <!-- Mood dots -->
+          <circle v-for="(p, i) in chartData.pts" :key="'m' + i"
+            :cx="p.x" :cy="p.my" r="3.5" fill="var(--blue)" />
+          <!-- Hunger dots -->
+          <circle v-for="(p, i) in chartData.pts" :key="'h' + i"
+            :cx="p.x" :cy="p.hy" r="3.5" fill="var(--orange)" />
+        </svg>
       </div>
 
       <!-- Secondary stats -->
