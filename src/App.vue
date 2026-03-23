@@ -63,6 +63,11 @@ const timeRemaining = computed(() => {
   return formatDuration(Math.max(0, fastingEnd.value - now.value))
 })
 
+const fastingDuration = computed(() => {
+  if (!fastingStart.value || !fastingEnd.value) return '00:00:00'
+  return formatDuration(fastingEnd.value - fastingStart.value)
+})
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 function formatDuration(ms) {
   const s   = Math.floor(ms / 1000)
@@ -111,6 +116,12 @@ function stopFasting() {
   deleteCookie(COOKIE_START)
   deleteCookie(COOKIE_END)
   clearLogs()
+}
+
+function stopEarly() {
+  const t = Date.now()
+  fastingEnd.value = t
+  setCookie(COOKIE_END, t)
 }
 
 function loadFromCookies() {
@@ -267,11 +278,9 @@ onUnmounted(() => clearInterval(timer))
       <button class="btn-start" @click="startFasting">🚀 Start Fasting</button>
     </main>
 
-    <!-- -- Progress View ---------------------------------------------------- -->
-    <main v-else class="card">
-      <div :class="['status-badge', isComplete ? 'badge-complete' : 'badge-active']">
-        {{ isComplete ? '🎉 Fast Complete!' : '⚡ Fasting Active' }}
-      </div>
+    <!-- ── Active View ──────────────────────────────────────────────────── -->
+    <main v-else-if="isActive" class="card">
+      <div class="status-badge badge-active">⚡ Fasting Active</div>
 
       <!-- Progress bar (main feature) -->
       <div class="progress-hero">
@@ -288,7 +297,7 @@ onUnmounted(() => clearInterval(timer))
       </div>
 
       <!-- Log entry -->
-      <div v-if="isActive" class="log-section">
+      <div class="log-section">
         <p class="section-label">How do you feel?</p>
         <div class="log-row">
           <span class="log-row-label">Mood</span>
@@ -360,22 +369,101 @@ onUnmounted(() => clearInterval(timer))
       <!-- Secondary stats -->
       <div class="stats">
         <div class="stat stat-full">
-          <span class="stat-label">{{ isComplete ? 'Goal Reached' : 'Time Remaining' }}</span>
-          <span class="stat-mono">{{ isComplete ? '✓' : timeRemaining }}</span>
+          <span class="stat-label">Time Remaining</span>
+          <span class="stat-mono">{{ timeRemaining }}</span>
         </div>
         <div class="stat">
           <span class="stat-label">Started</span>
           <span class="stat-date">{{ formatDateTime(fastingStart) }}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">{{ isComplete ? 'Ended' : 'Goal' }}</span>
+          <span class="stat-label">Goal</span>
           <span class="stat-date">{{ formatDateTime(fastingEnd) }}</span>
         </div>
       </div>
 
-      <button class="btn-stop" @click="stopFasting">
-        {{ isComplete ? '✅ Start New Fast' : '⏹ Stop Fast' }}
-      </button>
+      <button class="btn-stop" @click="stopEarly">⏹ Stop Fast</button>
+    </main>
+
+    <!-- ── Complete / Summary View ───────────────────────────────────────── -->
+    <main v-else class="card">
+      <div class="summary-header">
+        <div class="summary-icon">🎉</div>
+        <h2>Fast Complete!</h2>
+        <p class="summary-duration">{{ fastingDuration }} fasted</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Started</span>
+          <span class="stat-date">{{ formatDateTime(fastingStart) }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Ended</span>
+          <span class="stat-date">{{ formatDateTime(fastingEnd) }}</span>
+        </div>
+      </div>
+
+      <!-- Large summary chart -->
+      <template v-if="logs.length > 0 && chartData">
+        <p class="section-label summary-chart-label">Mood &amp; Hunger During Fast</p>
+        <div class="chart-wrap">
+          <div class="chart-legend">
+            <span class="legend-mood">&#9679; Mood</span>
+            <span class="legend-hunger">&#9679; Hunger</span>
+          </div>
+          <svg class="chart-svg chart-svg-large" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+            <line v-for="g in chartData.gridYs" :key="g.v"
+              :x1="chartData.x1" :x2="chartData.x2"
+              :y1="g.y" :y2="g.y"
+              stroke="var(--border)" stroke-width="1" />
+            <text v-for="g in chartData.gridYs" :key="'sl' + g.v"
+              :x="CPL - 4" :y="g.y + 4"
+              text-anchor="end" font-size="9" fill="var(--muted)">{{ g.v }}</text>
+            <polyline v-if="chartData.pts.length > 1"
+              :points="chartData.moodLine"
+              fill="none" stroke="var(--blue)" stroke-width="2.5"
+              stroke-linejoin="round" stroke-linecap="round" />
+            <polyline v-if="chartData.pts.length > 1"
+              :points="chartData.hungerLine"
+              fill="none" stroke="var(--orange)" stroke-width="2.5"
+              stroke-linejoin="round" stroke-linecap="round" />
+            <circle v-for="(p, i) in chartData.pts" :key="'sm' + i"
+              :cx="p.x" :cy="p.my" r="4.5" fill="var(--blue)" />
+            <circle v-for="(p, i) in chartData.pts" :key="'sh' + i"
+              :cx="p.x" :cy="p.hy" r="4.5" fill="var(--orange)" />
+          </svg>
+        </div>
+      </template>
+
+      <!-- Breaking the fast guide -->
+      <div class="break-guide">
+        <p class="section-label">Breaking Your Fast</p>
+        <div class="guide-list">
+          <div class="guide-item">
+            <span class="guide-icon">💧</span>
+            <span>Start with water or herbal tea to rehydrate before eating anything.</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-icon">🍵</span>
+            <span>Break the fast gently — bone broth, a small piece of fruit, or a few nuts are ideal first bites.</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-icon">⏳</span>
+            <span>Wait 20–30 minutes after your first bite before eating a full meal.</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-icon">🥗</span>
+            <span>Eat a balanced meal with protein, healthy fats, and vegetables. Avoid large amounts of refined carbs or sugar right away.</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-icon">🚫</span>
+            <span>Don't overeat — your stomach capacity may feel smaller. Stop when satisfied, not stuffed.</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-start" @click="stopFasting">✅ Start New Fast</button>
     </main>
   </div>
 </template>

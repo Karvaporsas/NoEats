@@ -486,6 +486,67 @@ h2 {
   color: var(--red);
 }
 
+/* ── Summary view ──────────────────────────────────────────────────────────── */
+.summary-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.summary-icon {
+  font-size: 2.4rem;
+  margin-bottom: 6px;
+}
+
+.summary-header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.summary-duration {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.summary-chart-label {
+  margin: 20px 0 10px;
+}
+
+.chart-svg-large {
+  height: 200px;
+}
+
+/* ── Break-fast guide ──────────────────────────────────────────────────────── */
+.break-guide {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 20px 0 24px;
+}
+
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.guide-item {
+  display: flex;
+  gap: 10px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.guide-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 400px) {
   .card { padding: 20px 16px; }
