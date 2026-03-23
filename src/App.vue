@@ -220,21 +220,23 @@ onUnmounted(() => clearInterval(timer))
         {{ isComplete ? '🎉 Fast Complete!' : '⚡ Fasting Active' }}
       </div>
 
-      <!-- Progress bar -->
-      <div class="progress-wrap">
-        <div class="progress-track">
-          <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+      <!-- Progress bar (main feature) -->
+      <div class="progress-hero">
+        <div class="progress-track-hero">
+          <div class="progress-fill-hero" :style="{ width: progress + '%' }"></div>
         </div>
-        <span class="progress-pct">{{ Math.floor(progress) }}%</span>
+        <div class="progress-pct-hero">{{ Math.floor(progress) }}%</div>
       </div>
 
-      <!-- Stats grid -->
+      <!-- Time Fasting (second feature) -->
+      <div class="elapsed-hero">
+        <span class="elapsed-label">Time Fasting</span>
+        <span class="elapsed-time">{{ timeElapsed }}</span>
+      </div>
+
+      <!-- Secondary stats -->
       <div class="stats">
-        <div class="stat">
-          <span class="stat-label">Time Fasting</span>
-          <span class="stat-mono">{{ timeElapsed }}</span>
-        </div>
-        <div class="stat">
+        <div class="stat stat-full">
           <span class="stat-label">{{ isComplete ? 'Goal Reached' : 'Time Remaining' }}</span>
           <span class="stat-mono">{{ isComplete ? '✓' : timeRemaining }}</span>
         </div>
@@ -515,36 +517,66 @@ h2 {
   color: var(--blue);
 }
 
-/* ── Progress bar ──────────────────────────────────────────────────────────── */
-.progress-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* ── Progress bar (hero) ───────────────────────────────────────────────────── */
+.progress-hero {
   margin-bottom: 24px;
 }
 
-.progress-track {
-  flex: 1;
-  height: 14px;
+.progress-track-hero {
+  height: 22px;
   background: var(--surf);
-  border-radius: 7px;
+  border-radius: 11px;
   overflow: hidden;
   border: 1px solid var(--border);
+  margin-bottom: 12px;
 }
 
-.progress-fill {
+.progress-fill-hero {
   height: 100%;
   background: linear-gradient(90deg, #3fb950 0%, #58a6ff 100%);
-  border-radius: 7px;
+  border-radius: 11px;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.progress-pct {
-  min-width: 38px;
-  text-align: right;
-  font-size: 0.9rem;
-  font-weight: 700;
+.progress-pct-hero {
+  text-align: center;
+  font-size: 2.4rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #3fb950, #58a6ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* ── Time fasting (hero) ───────────────────────────────────────────────────── */
+.elapsed-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px;
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.elapsed-label {
+  font-size: 0.72rem;
   color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.elapsed-time {
+  font-size: 3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
 /* ── Stats grid ────────────────────────────────────────────────────────────── */
@@ -588,6 +620,10 @@ h2 {
   line-height: 1.3;
 }
 
+.stat-full {
+  grid-column: 1 / -1;
+}
+
 /* ── Stop button ───────────────────────────────────────────────────────────── */
 .btn-stop {
   width: 100%;
@@ -612,6 +648,8 @@ h2 {
 @media (max-width: 400px) {
   .card { padding: 20px 16px; }
   h1    { font-size: 2rem; }
-  .stat-mono { font-size: 1.1rem; }
+  .stat-mono        { font-size: 1.1rem; }
+  .elapsed-time     { font-size: 2.2rem; }
+  .progress-pct-hero { font-size: 1.8rem; }
 }
 </style>
