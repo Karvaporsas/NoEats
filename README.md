@@ -40,6 +40,26 @@ Preview the production build locally:
 npm run preview
 ```
 
+## Deployment
+
+The project deploys automatically to Azure Static Web Apps via GitHub Actions on every push to `main`.
+
+### First-time setup
+
+1. Create an Azure Static Web App in the [Azure Portal](https://portal.azure.com) (choose **Other** as the deployment method when prompted).
+2. Once created, go to the resource → **Manage deployment token** and copy the token.
+3. In your GitHub repository, go to **Settings → Secrets and variables → Actions → New repository secret** and add:
+   - **Name:** `AZURE_STATIC_WEB_APPS_API_TOKEN`
+   - **Value:** the token copied from step 2
+
+After that, any push to `main` triggers the workflow in `.github/workflows/azure-static-web-apps.yml`, which:
+- Installs dependencies and runs `npm run build`
+- Deploys the `dist/` output to Azure Static Web Apps
+
+Pull requests also get an automatic staging preview URL posted as a PR comment, which is torn down when the PR is closed.
+
+> `GITHUB_TOKEN` is automatically provided by GitHub for every workflow run — no setup needed.
+
 ## Project Structure
 
 ```
