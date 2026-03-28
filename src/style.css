@@ -207,6 +207,34 @@ h2 {
 
 .datetime-input:focus { border-color: var(--blue); }
 
+/* ── Custom start time ─────────────────────────────────────────────────────── */
+.custom-start-row {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toggle-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--muted);
+  user-select: none;
+}
+
+.toggle-check input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+
+.toggle-check span { transition: color 0.15s; }
+.toggle-check:has(input:checked) span { color: var(--text); }
+
 /* ── Error ─────────────────────────────────────────────────────────────────── */
 .error-msg {
   color: var(--red);

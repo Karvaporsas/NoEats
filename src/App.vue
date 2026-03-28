@@ -15,6 +15,9 @@ const durationMinutes = ref(0)
 const endDateTime     = ref('')
 const errorMsg        = ref('')
 
+const customStartEnabled  = ref(false)
+const customStartDateTime = ref('')
+
 let timer = null
 
 // ── Cookie helpers ────────────────────────────────────────────────────────────
@@ -89,7 +92,16 @@ function formatDateTime(ts) {
 function startFasting() {
   errorMsg.value = ''
   clearLogs()
-  const start = Date.now()
+
+  let start
+  if (customStartEnabled.value) {
+    if (!customStartDateTime.value) { errorMsg.value = 'Please select a start time.'; return }
+    start = new Date(customStartDateTime.value).getTime()
+    if (isNaN(start) || start >= Date.now()) { errorMsg.value = 'Start time must be in the past.'; return }
+  } else {
+    start = Date.now()
+  }
+
   let end
 
   if (inputMode.value === 'duration') {
@@ -101,7 +113,7 @@ function startFasting() {
   } else {
     if (!endDateTime.value) { errorMsg.value = 'Please select an end date and time.'; return }
     end = new Date(endDateTime.value).getTime()
-    if (isNaN(end) || end <= start) { errorMsg.value = 'End time must be in the future.'; return }
+    if (isNaN(end) || end <= start) { errorMsg.value = 'End time must be after the start time.'; return }
   }
 
   fastingStart.value = start
@@ -154,6 +166,10 @@ function applyPreset(p) {
 
 const minDateTime = computed(() => {
   return new Date(Date.now() + 60000).toISOString().slice(0, 16)
+})
+
+const maxStartDateTime = computed(() => {
+  return new Date(Date.now()).toISOString().slice(0, 16)
 })
 
 // ── Mood & hunger log ─────────────────────────────────────────────────────────
@@ -273,6 +289,21 @@ onUnmounted(() => clearInterval(timer))
           class="datetime-input"
         />
       </template>
+
+      <!-- Custom start time -->
+      <div class="custom-start-row">
+        <label class="toggle-check">
+          <input type="checkbox" v-model="customStartEnabled" />
+          <span>Set custom start time</span>
+        </label>
+        <input
+          v-if="customStartEnabled"
+          type="datetime-local"
+          v-model="customStartDateTime"
+          :max="maxStartDateTime"
+          class="datetime-input"
+        />
+      </div>
 
       <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
       <button class="btn-start" @click="startFasting">🚀 Start Fasting</button>
